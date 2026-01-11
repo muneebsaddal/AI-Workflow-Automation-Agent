@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Workflow Automation Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .input-group textarea,
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .input-group textarea:focus,
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button-secondary {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-box.success {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .result-box.error {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .result-box.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .task-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .task-item h3 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 1em;
+        }
+
+        .task-item p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85em;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge.pending { background: #ffc107; color: #000; }
+        .badge.in_progress { background: #17a2b8; color: white; }
+        .badge.completed { background: #28a745; color: white; }
+        .badge.escalated { background: #dc3545; color: white; }
+
+        .badge.low { background: #e0e0e0; color: #333; }
+        .badge.medium { background: #ff9800; color: white; }
+        .badge.high { background: #f44336; color: white; }
+
+        .trace-steps {
+            margin-top: 15px;
+        }
+
+        .trace-step {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: white;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .api-endpoint {
+            background: #2d3748;
+            color: #63b3ed;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦙 AI Workflow Automation Agent</h1>
+            <p>Natural language task management powered by Ollama + Mistral</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- Left Column: Input -->
+            <div class="card">
+                <h2>📝 Task Input</h2>
+                
+                <div class="input-group">
+                    <label for="taskInput">Describe your task in natural language:</label>
+                    <textarea id="taskInput" placeholder="Examples:
+- Create a high priority task to review the budget
+- Update TASK-0001 status to completed
+- I need help planning the Q1 marketing campaign"></textarea>
+                </div>
+
+                <div>
+                    <button class="button" onclick="executeWorkflow()">
+                        Execute Workflow
+                    </button>
+                    <button class="button button-secondary" onclick="clearInput()">
+                        Clear
+                    </button>
+                </div>
+
+                <div id="resultBox" class="result-box">
+                    <div class="result-title" id="resultTitle"></div>
+                    <div id="resultContent"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: Task List -->
+            <div class="card">
+                <h2>📋 Task Database</h2>
+                
+                <div style="margin-bottom: 15px;">
+                    <button class="button" onclick="loadTasks()">
+                        Refresh Tasks
+                    </button>
+                    <button class="button button-secondary" onclick="resetDatabase()">
+                        Reset DB
+                    </button>
+                </div>
+
+                <div id="taskList" class="task-list">
+                    <p style="color: #999; text-align: center; padding: 20px;">
+                        Click "Refresh Tasks" to load tasks
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Info Card -->
+        <div class="card">
+            <h2>🔌 API Endpoints & Ollama Status</h2>
+            
+            <div id="ollamaStatus" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <strong>Checking Ollama status...</strong>
+            </div>
+            
+            <p style="margin-bottom: 15px; color: #666;">
+                This agent is accessible via REST API and webhooks for n8n integration:
+            </p>
+            
+            <div class="api-endpoint">
+                POST http://localhost:8000/webhook/task
+            </div>
+            <p style="margin: 10px 0; font-size: 0.9em; color: #666;">
+                Main webhook for natural language processing
+            </p>
+
+            <div class="api-endpoint">
+                GET http://localhost:8000/docs
+            </div>
+            <p style="margin: 10px 0; font-size: 0.9em; color: #666;">
+                Interactive API documentation (Swagger UI)
+            </p>
+            
+            <div class="api-endpoint">
+                GET http://localhost:8000/health
+            </div>
+            <p style="margin: 10px 0; font-size: 0.9em; color: #666;">
+                Health check with Ollama status
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        // Check Ollama status on page load
+        async function checkOllamaStatus() {
+            const statusDiv = document.getElementById('ollamaStatus');
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (data.ollama && data.ollama.status === 'connected') {
+                    statusDiv.innerHTML = `
+                        <div style="color: #28a745;">
+                            <strong>✅ Ollama Status: Connected</strong><br>
+                            <small>URL: ${data.ollama.url}</small><br>
+                            <small>Available models: ${data.ollama.available_models.join(', ')}</small>
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div style="color: #ffc107;">
+                            <strong>⚠️ Ollama Status: ${data.ollama ? data.ollama.status : 'Unknown'}</strong><br>
+                            <small>Make sure Ollama is running: ollama serve</small>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div style="color: #dc3545;">
+                        <strong>❌ Cannot connect to API server</strong><br>
+                        <small>Make sure the server is running on ${API_BASE}</small>
+                    </div>
+                `;
+            }
+        }
+
+        // Check status on page load
+        window.addEventListener('DOMContentLoaded', checkOllamaStatus);
+
+        async function executeWorkflow() {
+            const input = document.getElementById('taskInput').value.trim();
+            const resultBox = document.getElementById('resultBox');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultContent = document.getElementById('resultContent');
+
+            if (!input) {
+                alert('Please enter a task description');
+                return;
+            }
+
+            // Show loading
+            resultBox.className = 'result-box show';
+            resultTitle.innerHTML = 'Processing... <span class="loading"></span>';
+            resultContent.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/webhook/task`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ input })
+                });
+
+                const data = await response.json();
+
+                // Update result box
+                if (data.success) {
+                    resultBox.className = 'result-box show success';
+                    resultTitle.textContent = '✅ Success';
+                } else if (data.requires_human) {
+                    resultBox.className = 'result-box show warning';
+                    resultTitle.textContent = '⚠️ Human Review Required';
+                } else {
+                    resultBox.className = 'result-box show error';
+                    resultTitle.textContent = '❌ Error';
+                }
+
+                // Build result content
+                let content = `
+                    <p><strong>Intent:</strong> ${data.intent || 'Unknown'}</p>
+                    <p><strong>Result:</strong> ${data.result}</p>
+                    <p><strong>Reasoning:</strong> ${data.reasoning}</p>
+                `;
+
+                if (data.task_id) {
+                    content += `<p><strong>Task ID:</strong> ${data.task_id}</p>`;
+                }
+
+                if (data.execution_trace && data.execution_trace.length > 0) {
+                    content += '<div class="trace-steps"><strong>Execution Trace:</strong>';
+                    data.execution_trace.forEach((step, i) => {
+                        content += `<div class="trace-step">${i + 1}. ${step.step}</div>`;
+                    });
+                    content += '</div>';
+                }
+
+                resultContent.innerHTML = content;
+
+                // Refresh tasks
+                loadTasks();
+
+            } catch (error) {
+                resultBox.className = 'result-box show error';
+                resultTitle.textContent = '❌ Connection Error';
+                resultContent.innerHTML = `<p>Failed to connect to API server. Make sure the server is running on ${API_BASE}</p>`;
+            }
+        }
+
+        async function loadTasks() {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Loading...</p>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/tasks`);
+                const data = await response.json();
+
+                if (data.tasks.length === 0) {
+                    taskList.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No tasks yet</p>';
+                    return;
+                }
+
+                let html = '';
+                data.tasks.forEach(task => {
+                    html += `
+                        <div class="task-item">
+                            <h3>${task.title}</h3>
+                            <p>${task.description}</p>
+                            <div class="task-meta">
+                                <span><strong>ID:</strong> ${task.id}</span>
+                                <span class="badge ${task.status}">${task.status.replace('_', ' ')}</span>
+                                <span class="badge ${task.priority}">${task.priority}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                taskList.innerHTML = html;
+
+            } catch (error) {
+                taskList.innerHTML = `<p style="color: #dc3545; text-align: center; padding: 20px;">Failed to load tasks. Is the server running?</p>`;
+            }
+        }
+
+        async function resetDatabase() {
+            if (!confirm('Are you sure you want to reset the entire database? This cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reset`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Database reset successfully!');
+                    loadTasks();
+                }
+            } catch (error) {
+                alert('Failed to reset database');
+            }
+        }
+
+        function clearInput() {
+            document.getElementById('taskInput').value = '';
+            document.getElementById('resultBox').className = 'result-box';
+        }
+
+        // Handle Enter key (Shift+Enter for new line, Enter to submit)
+        document.getElementById('taskInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                executeWorkflow();
+            }
+        });
+    </script>
+</body>
+</html>

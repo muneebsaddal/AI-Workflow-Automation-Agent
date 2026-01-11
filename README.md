@@ -4,7 +4,7 @@ A complete implementation of an AI-powered workflow automation system using **La
 
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 
-![LangGraph](https://img.shields.io/badge/LangGraph-0.2.60-green.svg)
+![LangGraph](https://img.shields.io/badge/LangGraph-1.0.4-green.svg)
 
 ![Ollama](https://img.shields.io/badge/Ollama-Local-orange.svg)
 
@@ -685,16 +685,6 @@ python webhook_server.py
 
 ```
 
-**Claude API errors**
-
-```bash
-# Verify API key
-cat .env
-
-# Check API limits at console.anthropic.com
-
-```
-
 **Database corruption**
 
 ```bash
@@ -792,19 +782,5 @@ Contributions welcome! Please:
 
 MIT License - feel free to use this in your own projects!
 
-## 🙏 Acknowledgments
-
-- Built with [LangGraph](https://github.com/langchain-ai/langgraph)
-- Powered by [Anthropic Claude](https://www.anthropic.com/)
-- API with [FastAPI](https://fastapi.tiangolo.com/)
-- Workflow automation via [n8n](https://n8n.io/)
-
-## 📞 Support
-
-- 📖 [Documentation](https://claude.ai/chat/SETUP_GUIDE.md)
-- 🐛 [Issue Tracker](https://github.com/your-repo/issues)
-- 💬 [Discussions](https://github.com/your-repo/discussions)
-
 ---
 
-Built with ❤️ using LangGraph and Claude

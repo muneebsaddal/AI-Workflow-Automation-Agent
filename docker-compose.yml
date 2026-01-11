@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+# Ollama serive - runs the LLM locally
+  ollama:
+    image: ollama/ollama:latest
+    container_name: workflow-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - workflow-network
+    # Pull mistral model on startup
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ollama serve &
+        sleep 5
+        ollama pull mistral:latest
+        wait
+  workflow-agent:
+    build: .
+    container_name: ai-workflow-agent
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=mistral:latest
+      - TEMPERATURE=0.1
+    volumes:
+      # Persist database files
+      - ./data:/app/data
+      # Mount source for development (optional)
+      - ./workflow_agent.py:/app/workflow_agent.py
+      - ./webhook_server.py/app/webhook_server.py
+    restart: unless-stopped
+    networks:
+      - workflow-network
+    depends_on:
+      - ollama
+    # Wait for Ollama to be ready
+    command: >
+      sh -c "
+        echo 'Waiting for Ollama to be ready...'
+        until curl -s http://ollama:11434/api/tags > /dev/null 2>&1; do
+          sleep 2
+        done
+        echo 'Ollama is ready! Starting workflow agent...'
+        python webhook_server.py
+      "
+
+  # Optional: n8n for workflow automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: workflow-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=changeme
+      - WEBHOOK_URL=http://workflow-agent:8000
+    volumes:
+      - n8n-data:/home/node/.n8n
+    restart: unless-stopped
+    networks:
+      - workflow-network
+    depends_on:
+      - workflow-agent
+
+volumes:
+  ollama-data:
+  n8n-data:
+
+networks:
+  workflow-network:
+    driver: bridge

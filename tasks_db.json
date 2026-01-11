@@ -1,0 +1,99 @@
+{
+  "tasks": {
+    "TASK-0001": {
+      "id": "TASK-0001",
+      "title": "Review Q4 Financial Reports",
+      "description": "Comprehensive review of Q4 2024 financial reports and budget analysis",
+      "priority": "high",
+      "status": "in_progress",
+      "created_at": "2026-01-06T15:38:17.620280",
+      "updated_at": "2026-01-11T15:42:37.832291",
+      "history": [
+        {
+          "timestamp": "2026-01-09T15:38:17.620280",
+          "changes": {
+            "status": "in_progress"
+          }
+        },
+        {
+          "timestamp": "2026-01-11T15:42:37.832291",
+          "changes": {
+            "status": "in_progress"
+          }
+        }
+      ]
+    },
+    "TASK-0002": {
+      "id": "TASK-0002",
+      "title": "Update Product Documentation",
+      "description": "Update user documentation with latest feature releases",
+      "priority": "medium",
+      "status": "pending",
+      "created_at": "2026-01-08T15:38:17.620280",
+      "updated_at": "2026-01-08T15:38:17.620280",
+      "history": []
+    },
+    "TASK-0003": {
+      "id": "TASK-0003",
+      "title": "Client Meeting Preparation",
+      "description": "Prepare presentation and materials for Acme Corp meeting",
+      "priority": "high",
+      "status": "completed",
+      "created_at": "2026-01-04T15:38:17.620280",
+      "updated_at": "2026-01-10T15:38:17.620280",
+      "history": [
+        {
+          "timestamp": "2026-01-05T15:38:17.620280",
+          "changes": {
+            "status": "in_progress"
+          }
+        },
+        {
+          "timestamp": "2026-01-10T15:38:17.620280",
+          "changes": {
+            "status": "completed"
+          }
+        }
+      ]
+    },
+    "TASK-0004": {
+      "id": "TASK-0004",
+      "title": "Code Review - Authentication Module",
+      "description": "Review pull request for new authentication system",
+      "priority": "high",
+      "status": "pending",
+      "created_at": "2026-01-09T15:38:17.620280",
+      "updated_at": "2026-01-09T15:38:17.620280",
+      "history": []
+    },
+    "TASK-0005": {
+      "id": "TASK-0005",
+      "title": "Marketing Campaign Analysis",
+      "description": "Analyze performance metrics for Q1 marketing campaigns",
+      "priority": "medium",
+      "status": "in_progress",
+      "created_at": "2026-01-07T15:38:17.620280",
+      "updated_at": "2026-01-11T03:38:17.620280",
+      "history": [
+        {
+          "timestamp": "2026-01-11T03:38:17.620280",
+          "changes": {
+            "status": "in_progress",
+            "priority": "medium"
+          }
+        }
+      ]
+    },
+    "TASK-0006": {
+      "id": "TASK-0006",
+      "title": "Review Q4 financial reports",
+      "description": "Comprehensive review of Q4 financials",
+      "priority": "high",
+      "status": "pending",
+      "created_at": "2026-01-11T15:42:15.020865",
+      "updated_at": "2026-01-11T15:42:15.020865",
+      "history": []
+    }
+  },
+  "counter": 6
+}
