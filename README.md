@@ -29,6 +29,8 @@ This repo keeps a small n8n workflow for the original task-agent demo:
 
 - [AI Task Agent Ops Router](docs/ai-task-agent-ops-router.md)
 
+![AI Task Agent Ops Router workflow](docs/Screenshot%202026-05-17%20150657.png)
+
 The separate portfolio workflow repo lives at `C:\Users\munee\Documents\development_workspace\personal_projects\n8n-portfolio-workflows`.
 
 ### Why Ollama?
