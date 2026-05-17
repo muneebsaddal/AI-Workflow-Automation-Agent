@@ -1,0 +1,519 @@
+{
+  "name": "Portfolio - AI Task Agent Ops Router from Gmail",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "Original repo demo: an operations team sends natural-language work through Gmail. n8n calls the LangGraph/FastAPI task agent, then routes CREATE, UPDATE, or ESCALATE outcomes to task logs, team notifications, and human review.",
+        "height": 180,
+        "width": 400
+      },
+      "id": "note-use-case",
+      "name": "Use Case Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "task-agent-ops-demo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "gmail-task-request",
+      "name": "Gmail Intake - Ops Task Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "requester",
+              "value": "={{ $json.body.user_name || $json.user_name || 'ops-manager@company.local' }}",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "={{ $json.body.channel_name || $json.channel_name || 'ops-tasks@company.local' }}",
+              "type": "string"
+            },
+            {
+              "name": "raw_command",
+              "value": "={{ $json.body.text || $json.text || 'Create a high priority task to review Q4 financial reports' }}",
+              "type": "string"
+            },
+            {
+              "name": "source",
+              "value": "Gmail ops task inbox",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "normalize-command",
+      "name": "Normalize Gmail Task Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -300,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "policy_context",
+              "value": "={{ { allowed_actions: ['CREATE', 'UPDATE', 'ESCALATE'], escalation_channel: 'ops-review@company.local', audit_log: 'Google Sheets: task-agent-audit' } }}",
+              "type": "object"
+            },
+            {
+              "name": "agent_input",
+              "value": "={{ `${$json.raw_command}\\nRequester: ${$json.requester}\\nSource: ${$json.source}` }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "attach-policy",
+      "name": "Attach Routing Policy Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -40,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://workflow-agent:8000/webhook/task",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "input",
+              "value": "={{ $json.agent_input }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "call-task-agent",
+      "name": "FastAPI LangGraph Task Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "audit_record",
+              "value": "={{ { audit_target: 'Google Sheets: task-agent-audit', timestamp: $json.timestamp, success: $json.success, task_id: $json.task_id, intent: $json.intent, result: $json.result, reasoning: $json.reasoning, requires_human: $json.requires_human } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "audit-log",
+      "name": "Append Audit Log Row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.audit_record.requires_human }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "human-router",
+      "name": "Requires Human Review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        740,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "review_message",
+              "value": "={{ `Needs human review in ops-review@company.local. Intent: ${$json.audit_record.intent}. Reason: ${$json.audit_record.reasoning}. Result: ${$json.audit_record.result}` }}",
+              "type": "string"
+            },
+            {
+              "name": "review_ticket",
+              "value": "={{ { queue: 'Human Ops Review', priority: 'high', source: 'Gmail task agent', task_id: $json.audit_record.task_id, reason: $json.audit_record.reasoning } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "human-review",
+      "name": "Gmail Alert - Human Ops Review",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1000,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.audit_record.intent }}",
+              "rightValue": "create",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "create-router",
+      "name": "Intent is CREATE?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1000,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "created_task_notice",
+              "value": "={{ `Created ${$json.audit_record.task_id}: ${$json.audit_record.result}` }}",
+              "type": "string"
+            },
+            {
+              "name": "task_board_card",
+              "value": "={{ { board: 'Ops Tasks', lane: 'New', task_id: $json.audit_record.task_id, summary: $json.audit_record.result } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-path",
+      "name": "Create Task Board Card",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1260,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "updated_task_notice",
+              "value": "={{ `Updated ${$json.audit_record.task_id}: ${$json.audit_record.result}` }}",
+              "type": "string"
+            },
+            {
+              "name": "task_board_card",
+              "value": "={{ { board: 'Ops Tasks', lane: 'Updated', task_id: $json.audit_record.task_id, summary: $json.audit_record.result } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "update-path",
+      "name": "Update Task Board Card",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1260,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, audit_record: $json.audit_record, review_message: $json.review_message || null, clarification_email: $json.clarification_email || null, created_task_notice: $json.created_task_notice || null, updated_task_notice: $json.updated_task_notice || null, task_board_card: $json.task_board_card || null } }}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond to Gmail Intake",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !!$json.raw_command && $json.raw_command.length > 12 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "request-clear",
+      "name": "Request Clear Enough?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -40,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "clarification_email",
+              "value": "={{ { to: $json.requester, subject: \"Need more detail for task request\", body: \"Please reply with the task action, priority, and task ID if this is an update.\" } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "clarification-email",
+      "name": "Gmail Clarification Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Intake - Ops Task Request": {
+      "main": [
+        [
+          {
+            "node": "Normalize Gmail Task Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Gmail Task Request": {
+      "main": [
+        [
+          {
+            "node": "Request Clear Enough?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Routing Policy Context": {
+      "main": [
+        [
+          {
+            "node": "FastAPI LangGraph Task Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FastAPI LangGraph Task Agent": {
+      "main": [
+        [
+          {
+            "node": "Append Audit Log Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Audit Log Row": {
+      "main": [
+        [
+          {
+            "node": "Requires Human Review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Requires Human Review?": {
+      "main": [
+        [
+          {
+            "node": "Gmail Alert - Human Ops Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Intent is CREATE?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Alert - Human Ops Review": {
+      "main": [
+        [
+          {
+            "node": "Respond to Gmail Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent is CREATE?": {
+      "main": [
+        [
+          {
+            "node": "Create Task Board Card",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Task Board Card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Task Board Card": {
+      "main": [
+        [
+          {
+            "node": "Respond to Gmail Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Task Board Card": {
+      "main": [
+        [
+          {
+            "node": "Respond to Gmail Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request Clear Enough?": {
+      "main": [
+        [
+          {
+            "node": "Attach Routing Policy Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail Clarification Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Clarification Request": {
+      "main": [
+        {
+          "node": "Respond to Gmail Intake",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "portfolio-task-agent-router-v1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
+

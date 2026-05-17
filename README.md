@@ -23,6 +23,14 @@ This project demonstrates how to build a production-ready AI workflow automation
 - **Tracks complete execution history** for debugging and auditing
 - **Integrates with external tools** via webhooks (n8n, Zapier, etc.)
 
+## n8n Workflow
+
+This repo keeps a small n8n workflow for the original task-agent demo:
+
+- [AI Task Agent Ops Router](docs/ai-task-agent-ops-router.md)
+
+The separate portfolio workflow repo lives at `C:\Users\munee\Documents\development_workspace\personal_projects\n8n-portfolio-workflows`.
+
 ### Why Ollama?
 
 ✅ **100% Private** - All AI processing happens on your machine
@@ -156,6 +164,16 @@ python workflow_agent.py
 python webhook_server.py
 
 ```
+
+### Docker Compose with Local Ollama
+
+The Docker Compose stack uses your existing host-machine Ollama service instead of starting a second Ollama container. Start Ollama on Windows first, confirm `mistral:latest` appears in `ollama list`, then run:
+
+```bash
+docker compose up
+```
+
+Inside Docker, the workflow agent reaches your local Ollama at `http://host.docker.internal:11434`.
 
 ## 🦙 Ollama Model Selection
 
